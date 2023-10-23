@@ -18,13 +18,20 @@
 
 namespace sjtu {
 class int2048 {
-  // todo
+private:
+  const static int base = 10000;
+  const static int base_log10 = 4;
+  int len;
+  int *a;
+  int sgn;
+
 public:
   // 构造函数
   int2048();
   int2048(long long);
   int2048(const std::string &);
   int2048(const int2048 &);
+  ~int2048();
 
   // 以下给定函数的形式参数类型仅供参考，可自行选择使用常量引用或者不使用引用
   // 如果需要，可以自行增加其他所需的函数
