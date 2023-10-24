@@ -44,6 +44,8 @@ public:
   // 输出储存的大整数
   void print();
 
+  friend int2048 UnsignedAdd(const int2048 &, const int2048 &);
+  friend int2048 UnsignedMinus(const int2048 &, const int2048 &);
   // 加上一个大整数
   int2048 &add(const int2048 &);
   // 输出两个大整数之和
