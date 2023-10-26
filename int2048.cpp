@@ -289,6 +289,30 @@ sjtu::int2048 sjtu::minus(sjtu::int2048 x, const sjtu::int2048 &y)
   return x.minus(y);
 }
 
+sjtu::int2048 &sjtu::int2048::operator+=(const sjtu::int2048 &val)
+{
+  add(val);
+  return *this;
+}
+
+sjtu::int2048 sjtu::operator+(sjtu::int2048 x, const sjtu::int2048 &y)
+{
+  x.add(y);
+  return x;
+}
+
+sjtu::int2048 &sjtu::int2048::operator-=(const sjtu::int2048 &x)
+{
+  minus(x);
+  return *this;
+}
+
+sjtu::int2048 sjtu::operator-(sjtu::int2048 x, const sjtu::int2048 &y)
+{
+  x.minus(y);
+  return x;
+}
+
 int main()
 {
 
