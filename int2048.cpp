@@ -117,20 +117,24 @@ sjtu::int2048 sjtu::polynomial::ToInteger(bool high_digit_first = false,
     return ret;
   }
   ret.len = len;
+  long long *tmp;
+  tmp = new long long [len + 5];
   ret.a = new int [len + 5];
-  for (int i = 0; i < len; ++i) ret.a[i] = round(a[i].real());
+  for (int i = 0; i < len + 5; ++i) ret.a[i] = tmp[i] = 0;
+  for (int i = 0; i < len; ++i) tmp[i] = round(a[i].real());
   for (int i = 1; i < len; ++i)
   {
-    ret.a[i] += ret.a[i - 1] / sjtu::int2048::base;
-    ret.a[i - 1] %= sjtu::int2048::base;
+    tmp[i] += tmp[i - 1] / sjtu::int2048::base;
+    tmp[i - 1] %= sjtu::int2048::base;
   }
-  while (ret.a[ret.len - 1] >= sjtu::int2048::base)
+  while (tmp[ret.len - 1] >= sjtu::int2048::base)
   {
-    ret.a[ret.len] += ret.a[ret.len - 1] / sjtu::int2048::base;
-    ret.a[ret.len - 1] %= sjtu::int2048::base;
+    tmp[ret.len] += tmp[ret.len - 1] / sjtu::int2048::base;
+    tmp[ret.len - 1] %= sjtu::int2048::base;
     ++ret.len;
   }
-  while(ret.a[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
+  while(tmp[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
+  for (int i = 0; i < ret.len; ++i) ret.a[i] = tmp[i];
   return ret;
 }
 
@@ -485,5 +489,4 @@ sjtu::int2048 sjtu::operator*(sjtu::int2048 x, const sjtu::int2048 &y)
 
 int main()
 {
-
 }
