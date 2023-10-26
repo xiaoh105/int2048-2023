@@ -1,5 +1,141 @@
 #include <iostream>
+#include <complex>
+#include <cstring>
 #include <int2048.h>
+
+const int sjtu::polynomial::lowbit(int x) { return x & (-x); }
+
+sjtu::polynomial::polynomial()
+{
+  len = 1;
+  std::complex<long double> tmp(0, 0);
+  a = new std::complex<long double> [1]{tmp};
+}
+
+sjtu::polynomial::polynomial(const sjtu::int2048 &val,
+                             bool high_digit_first = false)
+{
+  len = val.len;
+  a = new std::complex<long double> [len + 5];
+  if (high_digit_first)
+    for (int i = 0; i < val.len; ++i)
+    {
+      std::complex<long double> tmp(1.0 * val.a[val.len - i - 1], 0);
+      a[i] = tmp;
+    }
+  else
+    for (int i = 0; i < val.len; ++i)
+    {
+      std::complex<long double> tmp(1.0 * val.a[i], 0);
+      a[i] = tmp;
+    }
+}
+
+sjtu::polynomial::polynomial(const sjtu::polynomial &val)
+{
+  len = val.len;
+  a = new std::complex<long double> [len + 5];
+  for (int i = 0; i < len; ++i) a[i] = val.a[i];
+}
+
+sjtu::polynomial::~polynomial()
+{
+  delete [] a;
+}
+
+void sjtu::polynomial::ExtendLen(int new_len)
+{
+  auto *new_a = new std::complex<long double> [new_len + 6];
+  for (int i = 0; i < len; ++i) new_a[i] = a[i];
+  std::complex<long double> tmp(0, 0);
+  for (int i = len; i < new_len; ++i) new_a[i] = tmp;
+  delete [] a;
+  a = new_a;
+  len = new_len;
+}
+
+void sjtu::polynomial::ChangeIndex()
+{
+  int *rev;
+  rev = new int [len + 5];
+  rev[0] = 0;
+  for (int i = 1; i < len; ++i)
+  {
+    rev[i] = (rev[i >> 1] >> 1);
+    if (i&1) rev[i] += (len >> 1);
+  }
+  for (int i = 0; i < len; ++i)
+    if (i < rev[i]) std::swap(a[i], a[rev[i]]);
+  delete [] rev;
+}
+
+void sjtu::polynomial::FFT(int is_FFT)
+{
+  ChangeIndex();
+  for (int step = 2; step <= len; step <<= 1)
+  {
+    std::complex<long double> w(cos(2.0 * M_PI / step),
+                                sin(2.0 * is_FFT * M_PI / step));
+    for (int i = 0; i < len; i += step)
+    {
+      std::complex<long double> cur_w(1, 0);
+      int j = i + (step >> 1);
+      for (int k = 0; k < (step >> 1); ++k)
+      {
+        std::complex<long double> f = a[i + k], g = a[j + k];
+        a[i + k] = f + cur_w * g;
+        a[j + k] = f - cur_w * g;
+        cur_w *= w;
+      }
+    }
+  }
+  if (is_FFT == -1)
+  {
+    for (int i = 0; i < len; ++i) a[i] /= 1.0 * len;
+  }
+}
+
+sjtu::polynomial &sjtu::polynomial::Multiply(sjtu::polynomial val)
+{
+  int new_len = 1;
+  while (new_len < len * 2 || new_len < val.len * 2) new_len *= 2;
+  ExtendLen(new_len);
+  val.ExtendLen(new_len);
+  FFT(1), val.FFT(1);
+  for (int i = 0; i < len; ++i) a[i] *= val.a[i];
+  FFT(-1);
+  return *this;
+}
+
+sjtu::int2048 sjtu::polynomial::ToInteger(bool high_digit_first = false,
+                                          int length = 0)
+{
+  sjtu::int2048 ret;
+  delete [] ret.a;
+  if (high_digit_first)
+  {
+    ret.a = new int [length + 5];
+    for (int i = 0; i < length; ++i) ret.a[i] = round(a[length - i - 1].real());
+    while (ret.a[len - 1] == 0 && ret.len >= 2) --ret.len;
+    return ret;
+  }
+  ret.len = len;
+  ret.a = new int [len + 5];
+  for (int i = 0; i < len; ++i) ret.a[i] = round(a[i].real());
+  for (int i = 1; i < len; ++i)
+  {
+    ret.a[i] += ret.a[i - 1] / sjtu::int2048::base;
+    ret.a[i - 1] %= sjtu::int2048::base;
+  }
+  while (ret.a[ret.len - 1] >= sjtu::int2048::base)
+  {
+    ret.a[ret.len] += ret.a[ret.len - 1] / sjtu::int2048::base;
+    ret.a[ret.len - 1] %= sjtu::int2048::base;
+    ++ret.len;
+  }
+  while(ret.a[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
+  return ret;
+}
 
 sjtu::int2048::int2048()
 {

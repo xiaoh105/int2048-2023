@@ -17,80 +17,102 @@
 
 // 请不要使用 using namespace std;
 
-namespace sjtu {
-class int2048 {
-private:
-  const static int base = 10000;
-  const static int base_log10 = 4;
-  int len;
-  int *a;
-  int sgn;
+namespace sjtu
+{
+  class int2048;
+  class polynomial
+  {
+  private:
+    int len;
+    std::complex<long double> *a;
+    const static int lowbit(int x);
+    void ChangeIndex();
+    void ExtendLen(int);
+    void FFT(int);
+  public:
+    friend class int2048;
+    polynomial();
+    polynomial(const polynomial &);
+    polynomial(const int2048 &, bool);
+    ~polynomial();
+    polynomial &Multiply(polynomial);
+    int2048 ToInteger(bool, int);
+  };
+  class int2048
+  {
+   private:
+    const static int base = 10000;
+    const static int base_log10 = 4;
+    int len;
+    int *a;
+    int sgn;
 
-public:
-  // 构造函数
-  int2048();
-  int2048(long long);
-  int2048(const std::string &);
-  int2048(const int2048 &);
-  ~int2048();
+   public:
+    friend class polynomial;
+    // 构造函数
+    int2048();
+    int2048(long long);
+    int2048(const std::string &);
+    int2048(const int2048 &);
+    ~int2048();
 
-  // 以下给定函数的形式参数类型仅供参考，可自行选择使用常量引用或者不使用引用
-  // 如果需要，可以自行增加其他所需的函数
-  // ===================================
-  // Integer1
-  // ===================================
+    // 以下给定函数的形式参数类型仅供参考，可自行选择使用常量引用或者不使用引用
+    // 如果需要，可以自行增加其他所需的函数
+    // ===================================
+    // Integer1
+    // ===================================
 
-  // 读入一个大整数
-  void read(const std::string &);
-  // 输出储存的大整数，无需换行
-  void print();
+    // 读入一个大整数
+    void read(const std::string &);
+    // 输出储存的大整数，无需换行
+    void print();
 
-  friend int2048 UnsignedAdd(const int2048 &, const int2048 &);
-  friend int2048 UnsignedMinus(const int2048 &, const int2048 &);
-  // 加上一个大整数
-  int2048 &add(const int2048 &);
-  // 返回两个大整数之和
-  friend int2048 add(int2048, const int2048 &);
+    friend int2048 UnsignedAdd(const int2048 &, const int2048 &);
+    friend int2048 UnsignedMinus(const int2048 &, const int2048 &);
+    // 加上一个大整数
+    int2048 &add(const int2048 &);
+    // 返回两个大整数之和
+    friend int2048 add(int2048, const int2048 &);
 
-  // 减去一个大整数
-  int2048 &minus(const int2048 &);
-  // 返回两个大整数之差
-  friend int2048 minus(int2048, const int2048 &);
+    // 减去一个大整数
+    int2048 &minus(const int2048 &);
+    // 返回两个大整数之差
+    friend int2048 minus(int2048, const int2048 &);
 
-  // ===================================
-  // Integer2
-  // ===================================
+    // ===================================
+    // Integer2
+    // ===================================
 
-  int2048 operator+() const;
-  int2048 operator-() const;
+    int2048 operator+() const;
+    int2048 operator-() const;
 
-  int2048 &operator=(const int2048 &);
+    int2048 &operator=(const int2048 &);
 
-  int2048 &operator+=(const int2048 &);
-  friend int2048 operator+(int2048, const int2048 &);
+    int2048 &operator+=(const int2048 &);
+    friend int2048 operator+(int2048, const int2048 &);
 
-  int2048 &operator-=(const int2048 &);
-  friend int2048 operator-(int2048, const int2048 &);
+    int2048 &operator-=(const int2048 &);
+    friend int2048 operator-(int2048, const int2048 &);
 
-  int2048 &operator*=(const int2048 &);
-  friend int2048 operator*(int2048, const int2048 &);
+    int2048 &operator*=(const int2048 &);
+    friend int2048 operator*(int2048, const int2048 &);
 
-  int2048 &operator/=(const int2048 &);
-  friend int2048 operator/(int2048, const int2048 &);
+    int2048 &operator/=(const int2048 &);
+    friend int2048 operator/(int2048, const int2048 &);
 
-  int2048 &operator%=(const int2048 &);
-  friend int2048 operator%(int2048, const int2048 &);
+    int2048 &operator%=(const int2048 &);
+    friend int2048 operator%(int2048, const int2048 &);
 
-  friend std::istream &operator>>(std::istream &, int2048 &);
-  friend std::ostream &operator<<(std::ostream &, const int2048 &);
+    friend std::istream &operator>>(std::istream &, int2048 &);
+    friend std::ostream &operator<<(std::ostream &, const int2048 &);
 
-  friend bool operator==(const int2048 &, const int2048 &);
-  friend bool operator!=(const int2048 &, const int2048 &);
-  friend bool operator<(const int2048 &, const int2048 &);
-  friend bool operator>(const int2048 &, const int2048 &);
-  friend bool operator<=(const int2048 &, const int2048 &);
-  friend bool operator>=(const int2048 &, const int2048 &);
-};
+    friend bool operator==(const int2048 &, const int2048 &);
+    friend bool operator!=(const int2048 &, const int2048 &);
+    friend bool operator<(const int2048 &, const int2048 &);
+    friend bool operator>(const int2048 &, const int2048 &);
+    friend bool operator<=(const int2048 &, const int2048 &);
+    friend bool operator>=(const int2048 &, const int2048 &);
+  };
 } // namespace sjtu
 
 #endif
