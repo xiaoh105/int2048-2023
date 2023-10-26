@@ -25,7 +25,6 @@ namespace sjtu
   private:
     int len;
     std::complex<long double> *a;
-    const static int lowbit(int x);
     void ChangeIndex();
     void ExtendLen(int);
     void FFT(int);

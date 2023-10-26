@@ -1,9 +1,6 @@
 #include <iostream>
 #include <complex>
-#include <cstring>
 #include <int2048.h>
-
-const int sjtu::polynomial::lowbit(int x) { return x & (-x); }
 
 sjtu::polynomial::polynomial()
 {
@@ -244,6 +241,28 @@ void sjtu::int2048::print()
   for (int i = len - 1; i >= 0; --i)
     if (i != len - 1) { printf("%04d", a[i]); }
     else { printf("%d", a[i]); }
+}
+
+std::istream &sjtu::operator>>(std::istream &input, sjtu::int2048 &x)
+{
+  std::string s;
+  input >> s;
+  x.read(s);
+  return input;
+}
+
+std::ostream &sjtu::operator<<(std::ostream &output, const sjtu::int2048 &x)
+{
+  if (x.sgn < 0 && (x.len != 0 || x.a[0] != 0)) output << "-";
+  output << x.a[x.len - 1];
+  for (int i = x.len - 2; i >= 0; --i)
+  {
+    if (x.a[i] < 1000) output << '0';
+    if (x.a[i] < 100) output << '0';
+    if (x.a[i] < 10) output << '0';
+    output << x.a[i];
+  }
+  return output;
 }
 
 sjtu::int2048 sjtu::int2048::operator+() const
