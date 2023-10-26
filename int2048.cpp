@@ -16,6 +16,7 @@ sjtu::int2048::int2048(long long val)
     sgn = -1;
     val = -val;
   }
+  len = 0;
   long long tmp = val;
   while (tmp)
   {
@@ -23,7 +24,7 @@ sjtu::int2048::int2048(long long val)
     tmp /= base;
   }
   if (val == 0) len = 1; // 0 has length 1
-  a = new int [len];
+  a = new int [len + 5];
   for (int i = 0; i < len; ++i)
   {
     a[i] = val % base;
@@ -63,7 +64,7 @@ sjtu::int2048::int2048(const sjtu::int2048 &val)
 {
   len = val.len;
   sgn = val.sgn;
-  a = new int [len];
+  a = new int [len + 5];
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
 }
 
@@ -126,7 +127,7 @@ sjtu::int2048 &sjtu::int2048::operator=(const sjtu::int2048 &val)
   delete [] a;
   len = val.len;
   sgn = val.sgn;
-  a = new int [len];
+  a = new int [len + 5];
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
   return *this;
 }
@@ -191,7 +192,7 @@ sjtu::int2048 sjtu::UnsignedAdd(const sjtu::int2048 &x, const sjtu::int2048 &y)
     ans.a[i] += ans.a[i - 1] / sjtu::int2048::base;
     ans.a[i - 1] %= sjtu::int2048::base;
   }
-  while (ans.a[ans.len - 1] >= sjtu::int2048::base)
+  if (ans.a[ans.len - 1] >= sjtu::int2048::base)
   {
     ans.a[ans.len] = ans.a[ans.len - 1] / sjtu::int2048::base;
     ans.a[ans.len - 1] %= sjtu::int2048::base;
@@ -219,10 +220,14 @@ sjtu::int2048 sjtu::UnsignedMinus(const sjtu::int2048 &x, const sjtu::int2048 &y
     }
   }
   int cur_digit = y.len;
-  while(borrow != 0)
+  while(cur_digit < ans.len && borrow != 0)
   {
-    if (ans.a[cur_digit] == 0) { ans.a[cur_digit] = 9; }
-    else { --ans.a[cur_digit], borrow = 0; }
+    if (ans.a[cur_digit] == 0) { ans.a[cur_digit] = sjtu::int2048::base - 1; }
+    else
+    {
+      --ans.a[cur_digit], borrow = 0;
+    }
+    ++cur_digit;
   }
   while (ans.a[ans.len - 1] == 0 && ans.len >= 2) --ans.len;
   return ans;
@@ -286,5 +291,27 @@ sjtu::int2048 sjtu::minus(sjtu::int2048 x, const sjtu::int2048 &y)
 
 int main()
 {
+  sjtu::int2048 a;
+  a.print(); puts("");
 
+  sjtu::int2048 b((long long)1145141919810);
+  b.print(); puts("");
+  sjtu::int2048((long long)-1145141919810).print(); puts("");
+
+  sjtu::int2048 c("-2333333333333333333333333333333333333333333333333333333");
+  c.print(); puts("");
+
+  sjtu::int2048 d("19260817192608171926081719260817192608171926081719260817");
+  d.print(); puts("");
+
+  d.read("-2333333333333333333333333333333333333333333333333333333");
+  d.print(); puts("");
+  d.read("19260817192608171926081719260817192608171926081719260817");
+  d.print(); puts("");
+
+  sjtu::int2048("0").print(); puts("");
+  sjtu::int2048("-0").print(); puts("");
+
+  sjtu::int2048 e(d);
+  e.print(); puts("");
 }
