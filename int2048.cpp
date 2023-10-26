@@ -449,6 +449,21 @@ sjtu::int2048 sjtu::operator-(sjtu::int2048 x, const sjtu::int2048 &y)
   return x;
 }
 
+sjtu::int2048 &sjtu::int2048::operator*=(const sjtu::int2048 &val)
+{
+  sjtu::polynomial x(*this), y(val);
+  int sgn_tmp = sgn * val.sgn;
+  *this = x.Multiply(y).ToInteger();
+  sgn = sgn_tmp;
+  return *this;
+}
+
+sjtu::int2048 sjtu::operator*(sjtu::int2048 x, const sjtu::int2048 &y)
+{
+  x *= y;
+  return x;
+}
+
 int main()
 {
 
