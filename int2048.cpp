@@ -1,37 +1,26 @@
 #include <iostream>
-#include <complex>
 #include <int2048.h>
 
 sjtu::polynomial::polynomial()
 {
   len = 1;
-  std::complex<long double> tmp(0, 0);
-  a = new std::complex<long double> [1]{tmp};
+  a = new __int128 [1]{0};
 }
-
 sjtu::polynomial::polynomial(const sjtu::int2048 &val,
                              bool high_digit_first = false)
 {
   len = val.len;
-  a = new std::complex<long double> [len + 5];
+  a = new __int128 [len + 5];
   if (high_digit_first)
-    for (int i = 0; i < val.len; ++i)
-    {
-      std::complex<long double> tmp(1.0 * val.a[val.len - i - 1], 0);
-      a[i] = tmp;
-    }
+    for (int i = 0; i < val.len; ++i) a[i] = val.a[val.len - i - 1];
   else
-    for (int i = 0; i < val.len; ++i)
-    {
-      std::complex<long double> tmp(1.0 * val.a[i], 0);
-      a[i] = tmp;
-    }
+    for (int i = 0; i < val.len; ++i) a[i] = val.a[i];
 }
 
 sjtu::polynomial::polynomial(const sjtu::polynomial &val)
 {
   len = val.len;
-  a = new std::complex<long double> [len + 5];
+  a = new __int128 [len + 5];
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
 }
 
@@ -42,10 +31,9 @@ sjtu::polynomial::~polynomial()
 
 void sjtu::polynomial::ExtendLen(int new_len)
 {
-  auto *new_a = new std::complex<long double> [new_len + 6];
+  auto *new_a = new __int128 [new_len + 6];
   for (int i = 0; i < len; ++i) new_a[i] = a[i];
-  std::complex<long double> tmp(0, 0);
-  for (int i = len; i < new_len; ++i) new_a[i] = tmp;
+  for (int i = len; i < new_len; ++i) new_a[i] = 0;
   delete [] a;
   a = new_a;
   len = new_len;
@@ -59,36 +47,75 @@ void sjtu::polynomial::ChangeIndex()
   for (int i = 1; i < len; ++i)
   {
     rev[i] = (rev[i >> 1] >> 1);
-    if (i&1) rev[i] += (len >> 1);
+    if (i & 1) rev[i] += (len >> 1);
   }
   for (int i = 0; i < len; ++i)
     if (i < rev[i]) std::swap(a[i], a[rev[i]]);
   delete [] rev;
 }
 
-void sjtu::polynomial::FFT(int is_FFT)
+__int128 sjtu::pow_mod(__int128 base, __int128 pow)
+{
+  __int128 ret = 1, cur_pow = base;
+  while (pow > 0)
+  {
+    if (pow & 1)
+    {
+      ret *= cur_pow;
+      ret %= sjtu::polynomial::mod;
+    }
+    cur_pow *= cur_pow, cur_pow %= sjtu::polynomial::mod;
+    pow >>= 1;
+  }
+  return ret;
+}
+
+void sjtu::Extend_GCD(__int128 a, __int128 b, __int128 &x, __int128 &y)
+{
+  if (b == 0)
+  {
+    x = 1, y = 0;
+    return;
+  }
+  Extend_GCD(b, a % b, y, x);
+  y -= x * (a / b);
+}
+
+__int128 sjtu::inverse(__int128 a)
+{
+  __int128 x, y;
+  Extend_GCD(a, sjtu::polynomial::mod, x, y);
+  x %= sjtu::polynomial::mod;
+  if (x < 0) x += sjtu::polynomial::mod;
+  return x;
+}
+
+void sjtu::polynomial::NTT(int is_NTT)
 {
   ChangeIndex();
   for (int step = 2; step <= len; step <<= 1)
   {
-    std::complex<long double> w(cos(2.0 * M_PI / step),
-                                sin(2.0 * is_FFT * M_PI / step));
+    __int128 w = 0;
+    if (is_NTT == 1) { w = pow_mod(root, (mod - 1) / step); }
+    else { w = pow_mod(inv, (mod - 1) / step); }
     for (int i = 0; i < len; i += step)
     {
-      std::complex<long double> cur_w(1, 0);
+      __int128 cur_w = 1;
       int j = i + (step >> 1);
       for (int k = 0; k < (step >> 1); ++k)
       {
-        std::complex<long double> f = a[i + k], g = a[j + k];
-        a[i + k] = f + cur_w * g;
-        a[j + k] = f - cur_w * g;
-        cur_w *= w;
+        __int128 f = a[i + k], g = a[j + k];
+        a[i + k] = f + cur_w * g % mod, a[i + k] %= mod;
+        a[j + k] = f - cur_w * g % mod;
+        a[j + k] = (a[j + k] % mod + mod) % mod;
+        cur_w *= w, cur_w %= mod;
       }
     }
   }
-  if (is_FFT == -1)
+  if (is_NTT == -1)
   {
-    for (int i = 0; i < len; ++i) a[i] /= 1.0 * len;
+    __int128 inv_len = inverse(len);
+    for (int i = 0; i < len; ++i) a[i] *= inv_len, a[i] %= mod;
   }
 }
 
@@ -98,9 +125,9 @@ sjtu::polynomial &sjtu::polynomial::Multiply(sjtu::polynomial val)
   while (new_len < len * 2 || new_len < val.len * 2) new_len *= 2;
   ExtendLen(new_len);
   val.ExtendLen(new_len);
-  FFT(1), val.FFT(1);
-  for (int i = 0; i < len; ++i) a[i] *= val.a[i];
-  FFT(-1);
+  NTT(1), val.NTT(1);
+  for (int i = 0; i < len; ++i) a[i] *= val.a[i], a[i] %= mod;
+  NTT(-1);
   return *this;
 }
 
@@ -112,16 +139,16 @@ sjtu::int2048 sjtu::polynomial::ToInteger(bool high_digit_first = false,
   if (high_digit_first)
   {
     ret.a = new int [length + 5];
-    for (int i = 0; i < length; ++i) ret.a[i] = round(a[length - i - 1].real());
+    for (int i = 0; i < length; ++i) ret.a[i] = a[length - i - 1];
     while (ret.a[len - 1] == 0 && ret.len >= 2) --ret.len;
     return ret;
   }
   ret.len = len;
-  long long *tmp;
-  tmp = new long long [len + 5];
+  __int128 *tmp;
+  tmp = new __int128 [len + 5];
   ret.a = new int [len + 5];
   for (int i = 0; i < len + 5; ++i) ret.a[i] = tmp[i] = 0;
-  for (int i = 0; i < len; ++i) tmp[i] = round(a[i].real());
+  for (int i = 0; i < len; ++i) tmp[i] = a[i];
   for (int i = 1; i < len; ++i)
   {
     tmp[i] += tmp[i - 1] / sjtu::int2048::base;
@@ -135,6 +162,7 @@ sjtu::int2048 sjtu::polynomial::ToInteger(bool high_digit_first = false,
   }
   while(tmp[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
   for (int i = 0; i < ret.len; ++i) ret.a[i] = tmp[i];
+  delete [] tmp;
   return ret;
 }
 
@@ -247,25 +275,23 @@ void sjtu::int2048::print()
     else { printf("%d", a[i]); }
 }
 
-std::istream &sjtu::operator>>(std::istream &input, sjtu::int2048 &x)
-{
-  std::string s;
-  input >> s;
+std::istream &sjtu::operator>>(std::istream &input, sjtu::int2048 &x) {
+  std::string s = "";
+  char ch = getchar();
+  while (ch == ' ' || ch == '\n' || ch == '\r') ch = getchar();
+  while (ch != ' ' && ch != '\n' && ch != '\r')
+  {
+    s += ch;
+    ch = getchar();
+  }
   x.read(s);
   return input;
 }
 
 std::ostream &sjtu::operator<<(std::ostream &output, const sjtu::int2048 &x)
 {
-  if (x.sgn < 0 && (x.len != 0 || x.a[0] != 0)) output << "-";
-  output << x.a[x.len - 1];
-  for (int i = x.len - 2; i >= 0; --i)
-  {
-    if (x.a[i] < 1000) output << '0';
-    if (x.a[i] < 100) output << '0';
-    if (x.a[i] < 10) output << '0';
-    output << x.a[i];
-  }
+  int2048 tmp = x;
+  tmp.print();
   return output;
 }
 

@@ -23,11 +23,18 @@ namespace sjtu
   class polynomial
   {
   private:
+    // root = 6, mod = 7 * (2 ^ 50) + 1
+    const static __int128 root = 6;
+    const static __int128 inv = 1313549891316395;
+    const static __int128 mod = 7881299347898369;
     int len;
-    std::complex<long double> *a;
+    __int128 *a;
     void ChangeIndex();
     void ExtendLen(int);
-    void FFT(int);
+    void NTT(int);
+    friend __int128 pow_mod(__int128, __int128);
+    friend void Extend_GCD(__int128, __int128, __int128 &, __int128 &);
+    friend __int128 inverse(__int128);
   public:
     friend class int2048;
     polynomial();
