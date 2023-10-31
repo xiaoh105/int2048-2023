@@ -24,20 +24,23 @@ namespace sjtu
   {
   private:
     // root = 6, mod = 7 * (2 ^ 50) + 1
-    const static __int128 root = 6;
-    const static __int128 inv = 1313549891316395;
-    const static __int128 mod = 7881299347898369;
+    constexpr static __int128 root = 6;
+    constexpr static __int128 inv = 1313549891316395;
+    constexpr static __int128 mod = 7881299347898369;
     int len;
     __int128 *a;
     void ChangeIndex();
     void ExtendLen(int);
     void NTT(int);
+    polynomial resize(int);
     friend __int128 pow_mod(__int128, __int128);
     friend void Extend_GCD(__int128, __int128, __int128 &, __int128 &);
     friend __int128 inverse(__int128);
   public:
+    polynomial GetInv(int);
     friend class int2048;
     polynomial();
+    polynomial(int);
     polynomial(const polynomial &);
     polynomial(const int2048 &, bool);
     ~polynomial();
@@ -72,6 +75,8 @@ namespace sjtu
     void read(const std::string &);
     // 输出储存的大整数，无需换行
     void print();
+
+    friend int2048 abs(const int2048 &);
 
     friend int2048 UnsignedAdd(const int2048 &, const int2048 &);
     friend int2048 UnsignedMinus(const int2048 &, const int2048 &);
