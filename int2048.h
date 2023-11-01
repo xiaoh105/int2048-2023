@@ -33,15 +33,12 @@ namespace sjtu
     void ExtendLen(int);
     void NTT(int);
     void CalcCarry(bool);
-    polynomial resize(int);
     friend __int128 pow_mod(__int128, __int128);
     friend void Extend_GCD(__int128, __int128, __int128 &, __int128 &);
     friend __int128 inverse(__int128);
   public:
-    polynomial GetInv(int);
     friend class int2048;
     polynomial();
-    polynomial(int);
     polynomial(const polynomial &);
     polynomial(polynomial &&) noexcept;
     polynomial(const int2048 &, bool);
@@ -49,9 +46,7 @@ namespace sjtu
     polynomial &operator=(const polynomial &);
     polynomial &operator=(polynomial &&) noexcept;
     polynomial &Multiply(polynomial);
-    polynomial &MultiplySimplified(polynomial);
     int2048 ToInteger();
-    int2048 ToIntegerRev(int);
   };
   class int2048
   {
@@ -115,7 +110,11 @@ namespace sjtu
 
     int2048 &operator*=(const int2048 &);
     friend int2048 operator*(int2048, const int2048 &);
+    friend int2048 operator*(int2048, long long);
 
+    friend void Adjust(const int2048 &, const int2048&, int2048 &, long long);
+    friend int2048 GetInv(const int2048 &, int);
+    int2048 &UnsignedDivide(const int2048 &);
     int2048 &operator/=(const int2048 &);
     friend int2048 operator/(int2048, const int2048 &);
 
@@ -124,6 +123,10 @@ namespace sjtu
 
     friend std::istream &operator>>(std::istream &, int2048 &);
     friend std::ostream &operator<<(std::ostream &, const int2048 &);
+    int2048 &operator<<=(int);
+    int2048 &operator>>=(int);
+    friend int2048 operator<<(int2048, int val);
+    friend int2048 operator>>(int2048, int val);
 
     friend bool operator==(const int2048 &, const int2048 &);
     friend bool operator!=(const int2048 &, const int2048 &);
