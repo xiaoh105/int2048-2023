@@ -29,9 +29,33 @@ sjtu::polynomial::polynomial(const sjtu::polynomial &val)
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
 }
 
+sjtu::polynomial::polynomial(sjtu::polynomial && val) noexcept
+{
+  a = val.a;
+  val.a = nullptr;
+  len = val.len;
+}
+
 sjtu::polynomial::~polynomial()
 {
-  // delete [] a;
+  delete [] a;
+}
+
+sjtu::polynomial &sjtu::polynomial::operator=(sjtu::polynomial &&val) noexcept
+{
+  a = val.a;
+  val.a = nullptr;
+  len = val.len;
+  return *this;
+}
+
+sjtu::polynomial &sjtu::polynomial::operator=(const sjtu::polynomial &val)
+{
+  len = val.len;
+  delete [] a;
+  a = new __int128  [len + 5];
+  for (int i = 0; i < len; ++i) a[i] = val.a[i];
+  return *this;
 }
 
 void sjtu::polynomial::ExtendLen(int new_len)
@@ -117,7 +141,7 @@ void sjtu::polynomial::NTT(int is_NTT)
   ChangeIndex();
   for (int step = 2; step <= len; step <<= 1)
   {
-    __int128 w = 0;
+    __int128 w;
     if (is_NTT == 1) { w = pow_mod(root, (mod - 1) / step); }
     else { w = pow_mod(inv, (mod - 1) / step); }
     for (int i = 0; i < len; i += step)
@@ -141,12 +165,41 @@ void sjtu::polynomial::NTT(int is_NTT)
   }
 }
 
+void sjtu::polynomial::CalcCarry(bool reverse)
+{
+  if (!reverse)
+  {
+    for (int i = 1; i < len; ++i)
+    {
+      a[i] += a[i - 1] / sjtu::int2048::base;
+      a[i - 1] %= sjtu::int2048::base;
+    }
+  }
+  else
+  {
+    for (int i = len - 2; i >= 0; --i)
+    {
+      a[i] += a[i + 1] / sjtu::int2048::base;
+      a[i + 1] %= sjtu::int2048::base;
+    }
+  }
+}
+
 sjtu::polynomial &sjtu::polynomial::Multiply(sjtu::polynomial val)
 {
   int new_len = 1;
   while (new_len < len * 2 || new_len < val.len * 2) new_len *= 2;
   ExtendLen(new_len);
   val.ExtendLen(new_len);
+  NTT(1), val.NTT(1);
+  for (int i = 0; i < len; ++i) a[i] *= val.a[i], a[i] %= mod;
+  NTT(-1);
+  return *this;
+}
+
+sjtu::polynomial &sjtu::polynomial::MultiplySimplified(sjtu::polynomial val)
+{
+  ExtendLen(val.len);
   NTT(1), val.NTT(1);
   for (int i = 0; i < len; ++i) a[i] *= val.a[i], a[i] %= mod;
   NTT(-1);
@@ -163,11 +216,7 @@ sjtu::polynomial sjtu::polynomial::GetInv(int target_len)
     polynomial val(resize(std::min(cur_len * 2, target_len)));
     polynomial tmp(ans);
     tmp.Multiply(val);
-    for (int i = tmp.len - 2; i >= 0; --i)
-    {
-      tmp.a[i] += tmp.a[i + 1] / sjtu::int2048::base;
-      tmp.a[i + 1] %= sjtu::int2048::base;
-    }
+    tmp.CalcCarry(true);
     ++tmp.a[0];
     for (int i = 1; i < tmp.len; ++i)
       tmp.a[i] = sjtu::int2048::base - tmp.a[i] - 1;
@@ -175,64 +224,53 @@ sjtu::polynomial sjtu::polynomial::GetInv(int target_len)
     tmp.a[0] = 2 - tmp.a[0];
     tmp = tmp.resize(std::min(cur_len * 3, target_len));
     ans = tmp.Multiply(ans);
-    for (int i = ans.len - 2; i >= 0; --i)
-    {
-      ans.a[i] += ans.a[i + 1] / sjtu::int2048::base;
-      ans.a[i + 1] %= sjtu::int2048::base;
-    }
+    ans.CalcCarry(true);
     cur_len <<= 1;
   }
   return ans;
 }
 
-sjtu::int2048 sjtu::polynomial::ToInteger(bool high_digit_first = false,
-                                          int length = 0)
+sjtu::int2048 sjtu::polynomial::ToInteger()
 {
   sjtu::int2048 ret;
   delete [] ret.a;
-  if (high_digit_first)
-  {
-    __int128 *tmp;
-    tmp = new __int128 [len + 20];
-    for (int i = len - 2; i >= 0; --i)
-    {
-      a[i] += a[i + 1] / sjtu::int2048::base;
-      a[i + 1] %= sjtu::int2048::base;
-    }
-    for (int i = 0; i < length; ++i) tmp[i] = a[i];
-    while (tmp[length - 1] >= sjtu::int2048::base)
-    {
-      tmp[length] += tmp[length - 1] / sjtu::int2048::base;
-      tmp[length - 1] %= sjtu::int2048::base;
-      ++length;
-    }
-    ret.a = new int [length + 5];
-    ret.len = length;
-    for (int i = 0; i < length; ++i)
-      ret.a[i] = static_cast<int>(tmp[length - i - 1]);
-    while (ret.a[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
-    return ret;
-  }
   ret.len = len;
   __int128 *tmp;
   tmp = new __int128 [len + 5];
   ret.a = new int [len + 5];
-  for (int i = 0; i < len + 5; ++i) tmp[i] = ret.a[i] = 0;
+  CalcCarry(false);
   for (int i = 0; i < len; ++i) tmp[i] = a[i];
-  for (int i = 1; i < len; ++i)
-  {
-    tmp[i] += tmp[i - 1] / sjtu::int2048::base;
-    tmp[i - 1] %= sjtu::int2048::base;
-  }
   while (tmp[ret.len - 1] >= sjtu::int2048::base)
   {
-    tmp[ret.len] += tmp[ret.len - 1] / sjtu::int2048::base;
+    tmp[ret.len] = tmp[ret.len - 1] / sjtu::int2048::base;
     tmp[ret.len - 1] %= sjtu::int2048::base;
     ++ret.len;
   }
   while(tmp[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
-  for (int i = 0; i < ret.len; ++i) ret.a[i] = tmp[i];
+  for (int i = 0; i < ret.len; ++i) ret.a[i] = static_cast<int>(tmp[i]);
   delete [] tmp;
+  return ret;
+}
+
+sjtu::int2048 sjtu::polynomial::ToIntegerRev(int length)
+{
+  sjtu::int2048 ret;
+  delete [] ret.a;
+  __int128 *tmp;
+  tmp = new __int128 [len + 20];
+  CalcCarry(true);
+  for (int i = 0; i < length; ++i) tmp[i] = a[i];
+  while (tmp[length - 1] >= sjtu::int2048::base)
+  {
+    tmp[length] += tmp[length - 1] / sjtu::int2048::base;
+    tmp[length - 1] %= sjtu::int2048::base;
+    ++length;
+  }
+  ret.a = new int [length + 5];
+  ret.len = length;
+  for (int i = 0; i < length; ++i)
+    ret.a[i] = static_cast<int>(tmp[length - i - 1]);
+  while (ret.a[ret.len - 1] == 0 && ret.len >= 2) --ret.len;
   return ret;
 }
 
@@ -262,7 +300,7 @@ sjtu::int2048::int2048(long long val)
   a = new int [len + 5];
   for (int i = 0; i < len; ++i)
   {
-    a[i] = val % base;
+    a[i] = static_cast<int>(val % base);
     val /= base;
   }
 }
@@ -283,7 +321,10 @@ sjtu::int2048::int2048(const std::string &s)
     input = s;
   }
   int ignore_digit = 0;
-  while (input[ignore_digit] == '0') ++ignore_digit;
+  while (input[ignore_digit] == '0' && ignore_digit != input.length() - 1)
+  {
+    ++ignore_digit;
+  }
   a = new int [input.length() / base_log10 + 5];
   for (int i = input.length() - 1; i >= ignore_digit; i -= base_log10)
   {
@@ -303,6 +344,14 @@ sjtu::int2048::int2048(const sjtu::int2048 &val)
   sgn = val.sgn;
   a = new int [len + 5];
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
+}
+
+sjtu::int2048::int2048(sjtu::int2048 &&val) noexcept
+{
+  this->sgn = val.sgn;
+  this->a = val.a;
+  val.a = nullptr;
+  this->len = val.len;
 }
 
 sjtu::int2048::~int2048()
@@ -339,7 +388,7 @@ void sjtu::int2048::read(const std::string &s)
   }
 }
 
-void sjtu::int2048::print()
+ void sjtu::int2048::print() const
 {
   if (sgn == -1 && (len != 1 || a[0] != 0)) printf("-");
   for (int i = len - 1; i >= 0; --i)
@@ -362,8 +411,7 @@ std::istream &sjtu::operator>>(std::istream &input, sjtu::int2048 &x) {
 
 std::ostream &sjtu::operator<<(std::ostream &output, const sjtu::int2048 &x)
 {
-  int2048 tmp = x;
-  tmp.print();
+  x.print();
   return output;
 }
 
@@ -393,6 +441,15 @@ sjtu::int2048 &sjtu::int2048::operator=(const sjtu::int2048 &val)
   sgn = val.sgn;
   a = new int [len + 5];
   for (int i = 0; i < len; ++i) a[i] = val.a[i];
+  return *this;
+}
+
+sjtu::int2048 &sjtu::int2048::operator=(sjtu::int2048 &&val) noexcept
+{
+  a = val.a;
+  val.a = nullptr;
+  len = val.len;
+  sgn = val.sgn;
   return *this;
 }
 
@@ -462,7 +519,7 @@ sjtu::int2048 sjtu::UnsignedAdd(const sjtu::int2048 &x, const sjtu::int2048 &y)
     ans.a[ans.len - 1] %= sjtu::int2048::base;
     ++ans.len;
   }
-  return ans;
+  return std::move(ans);
 }
 
 sjtu::int2048 sjtu::UnsignedMinus(const sjtu::int2048 &x, const sjtu::int2048 &y)
@@ -600,8 +657,7 @@ sjtu::int2048 &sjtu::int2048::operator/=(const sjtu::int2048 &val)
   int digits_of_b = val.len - 1;
   divisor = divisor.GetInv(digits_of_a + 10);
   dividend.Multiply(divisor);
-  int2048 tmp = dividend.ToInteger(true,
-                                   std::max(1, digits_of_a - digits_of_b + 1));
+  int2048 tmp = dividend.ToIntegerRev(std::max(1, digits_of_a - digits_of_b + 1));
   if (val.sgn == this->sgn) { tmp.sgn = 1; }
   else { tmp.sgn = -1; }
   if (abs(tmp * val) + abs(val) <= abs(*this)) tmp += int2048(tmp.sgn);

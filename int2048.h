@@ -32,6 +32,7 @@ namespace sjtu
     void ChangeIndex();
     void ExtendLen(int);
     void NTT(int);
+    void CalcCarry(bool);
     polynomial resize(int);
     friend __int128 pow_mod(__int128, __int128);
     friend void Extend_GCD(__int128, __int128, __int128 &, __int128 &);
@@ -42,10 +43,15 @@ namespace sjtu
     polynomial();
     polynomial(int);
     polynomial(const polynomial &);
+    polynomial(polynomial &&) noexcept;
     polynomial(const int2048 &, bool);
     ~polynomial();
+    polynomial &operator=(const polynomial &);
+    polynomial &operator=(polynomial &&) noexcept;
     polynomial &Multiply(polynomial);
-    int2048 ToInteger(bool, int);
+    polynomial &MultiplySimplified(polynomial);
+    int2048 ToInteger();
+    int2048 ToIntegerRev(int);
   };
   class int2048
   {
@@ -63,6 +69,7 @@ namespace sjtu
     int2048(long long);
     int2048(const std::string &);
     int2048(const int2048 &);
+    int2048(int2048 &&) noexcept;
     ~int2048();
 
     // 以下给定函数的形式参数类型仅供参考，可自行选择使用常量引用或者不使用引用
@@ -74,7 +81,7 @@ namespace sjtu
     // 读入一个大整数
     void read(const std::string &);
     // 输出储存的大整数，无需换行
-    void print();
+    void print() const;
 
     friend int2048 abs(const int2048 &);
 
@@ -98,6 +105,7 @@ namespace sjtu
     int2048 operator-() const;
 
     int2048 &operator=(const int2048 &);
+    int2048 &operator=(int2048 &&) noexcept;
 
     int2048 &operator+=(const int2048 &);
     friend int2048 operator+(int2048, const int2048 &);
