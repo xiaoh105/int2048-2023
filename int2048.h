@@ -50,15 +50,15 @@ namespace sjtu
   };
   class int2048
   {
-   private:
+  private:
     const static int base = 10000;
     const static int base_log10 = 4;
     int len;
     int *a;
-    int sgn;
 
-   public:
+  public:
     friend class polynomial;
+    int sgn;
     // 构造函数
     int2048();
     int2048(long long);
