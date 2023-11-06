@@ -7,15 +7,11 @@ sjtu::polynomial::polynomial()
   a = new __int128 [1]{0};
 }
 
-sjtu::polynomial::polynomial(const sjtu::int2048 &val,
-                             bool high_digit_first = false)
+sjtu::polynomial::polynomial(const sjtu::int2048 &val)
 {
   len = val.len;
   a = new __int128 [len + 5];
-  if (high_digit_first)
-    for (int i = 0; i < val.len; ++i) a[i] = val.a[val.len - i - 1];
-  else
-    for (int i = 0; i < val.len; ++i) a[i] = val.a[i];
+  for (int i = 0; i < val.len; ++i) a[i] = val.a[i];
 }
 
 sjtu::polynomial::polynomial(const sjtu::polynomial &val)
@@ -144,23 +140,12 @@ void sjtu::polynomial::NTT(int is_NTT)
   }
 }
 
-void sjtu::polynomial::CalcCarry(bool reverse)
+void sjtu::polynomial::CalcCarry()
 {
-  if (!reverse)
+  for (int i = 1; i < len; ++i)
   {
-    for (int i = 1; i < len; ++i)
-    {
-      a[i] += a[i - 1] / sjtu::int2048::base;
-      a[i - 1] %= sjtu::int2048::base;
-    }
-  }
-  else
-  {
-    for (int i = len - 2; i >= 0; --i)
-    {
-      a[i] += a[i + 1] / sjtu::int2048::base;
-      a[i + 1] %= sjtu::int2048::base;
-    }
+    a[i] += a[i - 1] / sjtu::int2048::base;
+    a[i - 1] %= sjtu::int2048::base;
   }
 }
 
@@ -184,7 +169,7 @@ sjtu::int2048 sjtu::polynomial::ToInteger()
   __int128 *tmp;
   tmp = new __int128 [len + 5];
   ret.a = new int [len + 5];
-  CalcCarry(false);
+  CalcCarry();
   for (int i = 0; i < len; ++i) tmp[i] = a[i];
   while (tmp[ret.len - 1] >= sjtu::int2048::base)
   {
@@ -403,6 +388,7 @@ sjtu::int2048 sjtu::abs(const int2048 &x)
 
 sjtu::int2048 &sjtu::int2048::operator=(const sjtu::int2048 &val)
 {
+  if (this == &val) return *this;
   delete [] a;
   len = val.len;
   sgn = val.sgn;
@@ -621,7 +607,7 @@ sjtu::int2048 sjtu::operator*(sjtu::int2048 x, const sjtu::int2048 &y)
 
 sjtu::int2048 sjtu::operator*(sjtu::int2048 x, long long y)
 {
-  if (y >= 1e12) return x * int2048(y);
+  if (y >= static_cast<long long>(1e12)) return x * int2048(y);
   if (y < 0)
   {
     x.sgn *= -1;
