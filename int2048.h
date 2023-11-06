@@ -2,20 +2,11 @@
 #ifndef SJTU_BIGINTEGER
 #define SJTU_BIGINTEGER
 
-// Integer 1:
-// 实现一个有符号的大整数类，只需支持简单的加减
-
-// Integer 2:
-// 实现一个有符号的大整数类，支持加减乘除，并重载相关运算符
-
-// 请不要使用除了以下头文件之外的其它头文件
 #include <complex>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <vector>
-
-// 请不要使用 using namespace std;
 
 namespace sjtu
 {
@@ -43,6 +34,7 @@ namespace sjtu
     friend void Extend_GCD(__int128, __int128, __int128 &, __int128 &);
     /// 求取模意义下的乘法逆元
     friend __int128 inverse(__int128);
+
   public:
     friend class int2048;
     /// 默认构造函数, 默认构造f(x) = 0
@@ -105,12 +97,6 @@ namespace sjtu
     int2048(int2048 &&) noexcept;
     /// 析构函数
     ~int2048();
-
-    // 以下给定函数的形式参数类型仅供参考，可自行选择使用常量引用或者不使用引用
-    // 如果需要，可以自行增加其他所需的函数
-    // ===================================
-    // Integer1
-    // ===================================
 
     /// 读入一个大整数
     void read(const std::string &);
